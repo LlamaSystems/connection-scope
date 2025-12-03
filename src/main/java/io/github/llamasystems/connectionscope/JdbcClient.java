@@ -1,38 +1,44 @@
 package io.github.llamasystems.connectionscope;
 
+import io.github.llamasystems.connectionscope.exception.ConnectionScopeException;
+import org.intellij.lang.annotations.Language;
+
 import java.sql.Connection;
 
 /// # JdbcClient
 /// Abstraction over JDBC operations used by [ConnectionScope].
 ///
-/// Provides methods for executing queries and updates with parameter binding and mapping results
-/// to Java objects. Also exposes the underlying [Connection] for advanced use cases.
+/// All operations are executed on the single [Connection] owned by
+/// the parent [ConnectionScope].
 ///
 /// @author Aliabbos Ashurov
 /// @since 1.0.0
 public interface JdbcClient {
 
-    /// Executes a SQL query and maps the result set to Java objects.
+    /// Executes a SELECT query and maps each row using the provided [RowMapper].
     ///
-    /// @param sql    the SQL query
-    /// @param mapper the row mapper to convert ResultSet rows into objects
-    /// @param params query parameters
-    /// @param <T>    the type of objects returned
-    /// @return a [Result] containing the mapped objects
-    <T> Result<T> query(String sql, RowMapper<T> mapper, Object... params);
+    /// @param sql    the SQL query to execute
+    /// @param mapper row mapper that converts a [java.sql.ResultSet] row into `T`
+    /// @param params positional parameters (may be empty)
+    /// @param <T>    the target type
+    /// @return an immutable [Result] containing mapped rows
+    /// @throws ConnectionScopeException if query execution fails
+    <T> Result<T> query(@Language("SQL") String sql, RowMapper<T> mapper, Object... params);
 
-    /// Executes a SQL update (INSERT, UPDATE, DELETE).
+    /// Executes an INSERT, UPDATE, or DELETE statement.
     ///
-    /// @param sql    the SQL update statement
-    /// @param params update parameters
+    /// @param sql    the SQL statement
+    /// @param params positional parameters (may be empty)
     /// @return a [Result] containing the number of affected rows
-    Result<Integer> update(String sql, Object... params);
+    /// @throws ConnectionScopeException if execution fails
+    Result<Integer> update(@Language("SQL") String sql, Object... params);
 
-    /// Returns the underlying JDBC [Connection] used by this client.
+    /// Executes an INSERT statement that may generate keys and returns the first generated key
+    /// if available; otherwise returns the number of affected rows.
     ///
-    /// Use with caution: modifying the connection state directly may interfere with
-    /// transaction management by [ConnectionScope].
-    ///
-    /// @return the JDBC connection
-    Connection getConnection();
+    /// @param sql    the INSERT statement
+    /// @param params positional parameters
+    /// @return a [Result] containing the generated key (if any) or affected row count
+    /// @throws ConnectionScopeException if execution fails
+    Result<Integer> updateReturningKey(@Language("SQL") String sql, Object... params);
 }

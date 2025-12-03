@@ -3,7 +3,7 @@ package io.github.llamasystems.connectionscope;
 import java.util.Collections;
 import java.util.List;
 
-/// # ResultImpl
+/// # QueryResult
 /// Immutable implementation of [Result] that wraps a list of rows returned from a query.
 ///
 /// Guarantees that the internal list is unmodifiable.
@@ -12,6 +12,7 @@ import java.util.List;
 /// @since 1.0.0
 @SuppressWarnings("ClassCanBeRecord")
 final class QueryResult<T> implements Result<T> {
+
     private final List<T> rows;
 
     QueryResult(List<T> rows) {

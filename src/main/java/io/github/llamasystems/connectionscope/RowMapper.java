@@ -3,7 +3,7 @@ package io.github.llamasystems.connectionscope;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/// # ResultSetMapper
+/// # RowMapper
 /// Functional interface to map a [ResultSet] row into a Java object.
 ///
 /// Typically used by [JdbcClient#query(String, RowMapper, Object...)] to convert query results
@@ -14,10 +14,10 @@ import java.sql.SQLException;
 @FunctionalInterface
 public interface RowMapper<T> {
 
-    /// Maps the current row of the given [ResultSet] to an object of type `T`.
+    /// Maps the current row of the result set.
     ///
-    /// @param rs the result set, positioned at the current row
-    /// @return the mapped object
-    /// @throws SQLException if any SQL error occurs
+    /// @param rs the result set, positioned on the current row
+    /// @return the mapped object, may be `null`
+    /// @throws SQLException if a database access error occurs
     T map(ResultSet rs) throws SQLException;
 }
