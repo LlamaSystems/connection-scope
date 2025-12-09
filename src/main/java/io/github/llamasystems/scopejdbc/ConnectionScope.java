@@ -96,7 +96,6 @@ public sealed interface ConnectionScope extends AutoCloseable
         return new TransactionalScope(dataSource, mode.isReadOnly());
     }
 
-
     /// If an unchecked exception or error escapes the block in a transactional scope,
     /// the current transaction branch is automatically rolled back.
     /// The scope remains active and may be reused for further operations.
@@ -116,8 +115,13 @@ public sealed interface ConnectionScope extends AutoCloseable
     /// queries and start new transaction branches (via further commit/rollback).
     /// Only [#close()] finally terminates the scope and returns the connection.
     ///
-    /// @throws ConnectionScopeException if not a transactional scope, not active,
-    ///                                  wrong thread, or commit fails
+    ///
+    /// **Note:** Calling `commit()` on a **read-only** transactional scope
+    /// is allowed and is effectively a no-op for most databases (some drivers require an explicit commit
+    /// even when no changes were made).
+    ///
+    /// @throws ConnectionScopeException if this is not a transactional scope, the scope is not active,
+    ///                                                                   the calling thread is wrong, or the commit fails
     void commit();
 
     /// Rolls back the current transaction branch.
@@ -126,8 +130,14 @@ public sealed interface ConnectionScope extends AutoCloseable
     /// queries and start new transactions again.
     /// Only [#close()] finally terminates the scope and returns the connection.
     ///
-    /// @throws ConnectionScopeException if not a transactional scope, not active,
-    ///                                  wrong thread, or rollback fails
+    ///
+    /// **Note:** Calling `rollback()` on a **read-only** transactional scope
+    /// is a **no-op** — it returns immediately without performing any action,
+    /// because read-only transactions have no changes to roll back.
+    ///
+    /// @throws ConnectionScopeException if this is not a transactional scope, the scope is not active,
+    ///                                  the calling thread is wrong, or the rollback fails
+    ///                                  (rollback errors can only occur in read-write mode)
     void rollback();
 
     /// Returns the current lifecycle state of the scope.
@@ -137,8 +147,10 @@ public sealed interface ConnectionScope extends AutoCloseable
 
     /// Provides direct access to the underlying [Connection].
     ///
-    /// The connection is managed by this scope and must not be closed manually.
-    /// Use this method only for advanced cases where direct JDBC access is required.
+    /// The connection is owned and managed by this scope and MUST NOT be closed or used
+    /// to change transactional state (for example: setAutoCommit, setTransactionIsolation).
+    /// Doing so will result in undefined behaviour and may throw [ConnectionScopeException].
+    /// This method is intended only for advanced usage.
     ///
     /// @return the [Connection] bound to this scope
     @ConnectionScopeManaged
